@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import {BaseCommand} from '../lib/base-command.js';
 import {colorRecovery, recoveryEmoji, colorStrain, colorSleepPerformance} from '../lib/formatter.js';
-import {msToHuman, kjToKcal, formatNumber, formatFloat, formatPercent} from '../lib/units.js';
+import {msToHuman, kjToKcal, formatNumber, formatFloat, formatPercent, totalSleepTimeMs} from '../lib/units.js';
 import type {Cycle, Recovery, Sleep, Workout} from '../lib/types.js';
 
 export default class Dashboard extends BaseCommand {
@@ -40,6 +40,15 @@ export default class Dashboard extends BaseCommand {
     const recovery: Recovery | undefined = recoveryResult.status === 'fulfilled' ? recoveryResult.value : undefined;
     const sleep: Sleep | undefined = sleepResult.status === 'fulfilled' ? sleepResult.value.records[0] : undefined;
     const workout: Workout | undefined = workoutResult.status === 'fulfilled' ? workoutResult.value.records[0] : undefined;
+
+    // Warn about any failed fetches
+    const failures: string[] = [];
+    if (recoveryResult.status === 'rejected') failures.push('recovery');
+    if (sleepResult.status === 'rejected') failures.push('sleep');
+    if (workoutResult.status === 'rejected') failures.push('workout');
+    if (failures.length > 0) {
+      process.stderr.write(`Warning: failed to fetch ${failures.join(', ')} data.\n`);
+    }
 
     if (format === 'json') {
       this.log(JSON.stringify({cycle, recovery, sleep, workout}, null, 2));
@@ -107,12 +116,12 @@ export default class Dashboard extends BaseCommand {
 
   private printRecoverySection(recovery: Recovery | undefined, noColor: boolean): void {
     if (!recovery) {
-      this.log(`${recoveryEmoji(50)} Recovery: No data`);
+      this.log('\u26AA Recovery: No data');
       return;
     }
 
     if (recovery.score_state !== 'SCORED' || !recovery.score) {
-      this.log(`${recoveryEmoji(50)} Recovery: (${recovery.score_state === 'PENDING_SCORE' ? 'Pending' : 'Unscorable'})`);
+      this.log(`\u26AA Recovery: (${recovery.score_state === 'PENDING_SCORE' ? 'Pending' : 'Unscorable'})`);
       return;
     }
 
@@ -151,7 +160,7 @@ export default class Dashboard extends BaseCommand {
 
     const sc = sleep.score;
     const stages = sc.stage_summary;
-    const totalSleep = stages.total_light_sleep_time_milli + stages.total_slow_wave_sleep_time_milli + stages.total_rem_sleep_time_milli;
+    const totalSleep = totalSleepTimeMs(stages);
 
     const perfStr = sc.sleep_performance_percentage !== undefined
       ? ` (Performance: ${colorSleepPerformance(sc.sleep_performance_percentage, noColor)})`

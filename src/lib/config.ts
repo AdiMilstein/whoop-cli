@@ -54,7 +54,9 @@ export function loadConfig(): CliConfig {
     const raw = readFileSync(path, 'utf-8');
     cachedConfig = JSON.parse(raw) as CliConfig;
     return cachedConfig;
-  } catch {
+  } catch (error) {
+    const detail = error instanceof Error ? `: ${error.message}` : '';
+    process.stderr.write(`Warning: could not parse config file${detail}. Using defaults.\n`);
     cachedConfig = {};
     return cachedConfig;
   }

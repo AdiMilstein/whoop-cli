@@ -81,5 +81,14 @@
     "sleep",
     "workout"
   ],
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AdiMilstein/whoop-cli.git"
+  },
+  "author": "Adi Milstein",
+  "bugs": {
+    "url": "https://github.com/AdiMilstein/whoop-cli/issues"
+  },
+  "homepage": "https://github.com/AdiMilstein/whoop-cli#readme"
 }

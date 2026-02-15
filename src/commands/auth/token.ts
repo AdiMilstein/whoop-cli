@@ -2,8 +2,10 @@ import {Flags} from '@oclif/core';
 import * as readline from 'node:readline/promises';
 import {BaseCommand} from '../../lib/base-command.js';
 import {saveAuth} from '../../lib/auth.js';
-import {getApi, resetApi} from '../../lib/api.js';
+import {getApi, resetApi, WhoopApiError} from '../../lib/api.js';
 import type {AuthData} from '../../lib/types.js';
+
+const DEFAULT_TOKEN_TTL_MS = 30 * 60 * 1000; // 30 minutes (conservative default)
 
 export default class AuthToken extends BaseCommand {
   static override description = 'Authenticate by pasting an access token directly';
@@ -55,7 +57,7 @@ export default class AuthToken extends BaseCommand {
     const auth: AuthData = {
       access_token: accessToken,
       refresh_token: refreshToken,
-      expires_at: Date.now() + (60 * 60 * 1000), // Assume 1 hour if unknown
+      expires_at: Date.now() + DEFAULT_TOKEN_TTL_MS,
     };
 
     saveAuth(auth);
@@ -75,10 +77,15 @@ export default class AuthToken extends BaseCommand {
 
       this.log(`Authenticated as ${profile.first_name} ${profile.last_name} (${profile.email})`);
     } catch (error) {
-      // Clean up invalid token
-      const {clearAuth} = await import('../../lib/auth.js');
-      clearAuth();
-      this.error('Token validation failed. The token may be invalid or expired.');
+      if (error instanceof WhoopApiError && error.statusCode === 401) {
+        // Token is definitely invalid — clear it
+        const {clearAuth} = await import('../../lib/auth.js');
+        clearAuth();
+        this.error('Token validation failed. The token is invalid or expired.');
+      }
+
+      // Network or other error — keep the saved token
+      this.error('Token validation failed: could not reach WHOOP API. The token has been saved and will be used for future requests.');
     }
   }
 }

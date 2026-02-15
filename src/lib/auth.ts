@@ -122,21 +122,13 @@ export async function getValidToken(forceRefresh = false): Promise<string> {
     return auth.access_token;
   }
 
-  if (forceRefresh) {
+  if (forceRefresh || isTokenExpired(auth)) {
     try {
       const newAuth = await refreshToken(auth);
       return newAuth.access_token;
-    } catch {
-      throw new Error('Session expired. Run "whoop auth login" to re-authenticate.');
-    }
-  }
-
-  if (isTokenExpired(auth)) {
-    try {
-      const newAuth = await refreshToken(auth);
-      return newAuth.access_token;
-    } catch {
-      throw new Error('Session expired. Run "whoop auth login" to re-authenticate.');
+    } catch (error) {
+      const detail = error instanceof Error ? `: ${error.message}` : '';
+      throw new Error(`Session expired. Run "whoop auth login" to re-authenticate${detail}`);
     }
   }
 

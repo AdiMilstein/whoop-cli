@@ -1,7 +1,7 @@
 import {Args} from '@oclif/core';
 import {BaseCommand} from '../../lib/base-command.js';
 import {colorSleepPerformance} from '../../lib/formatter.js';
-import {msToHuman, formatPercent, formatFloat} from '../../lib/units.js';
+import {msToHuman, formatPercent, formatFloat, totalSleepTimeMs} from '../../lib/units.js';
 import type {Sleep} from '../../lib/types.js';
 import type {Column} from '../../lib/formatter.js';
 
@@ -89,7 +89,7 @@ export default class SleepGet extends BaseCommand {
 
     const sc = sleep.score;
     const stages = sc.stage_summary;
-    const totalSleep = stages.total_light_sleep_time_milli + stages.total_slow_wave_sleep_time_milli + stages.total_rem_sleep_time_milli;
+    const totalSleep = totalSleepTimeMs(stages);
 
     return {
       date: sleep.start.split('T')[0],
@@ -124,7 +124,7 @@ export default class SleepGet extends BaseCommand {
 
     const sc = sleep.score!;
     const stages = sc.stage_summary;
-    const totalSleep = stages.total_light_sleep_time_milli + stages.total_slow_wave_sleep_time_milli + stages.total_rem_sleep_time_milli;
+    const totalSleep = totalSleepTimeMs(stages);
 
     const perfStr = sc.sleep_performance_percentage !== undefined
       ? colorSleepPerformance(sc.sleep_performance_percentage, noColor)

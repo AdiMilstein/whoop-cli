@@ -3,7 +3,9 @@ import {
   msToHuman, kjToKcal, metersToFeetInches, kgToLbs,
   celsiusToFahrenheit, metersToMiles, metersToKm,
   formatNumber, formatPercent, formatFloat,
+  totalSleepTimeMs, metersToFeet,
 } from '../../../src/lib/units.js';
+import {makeSleepStageSummary} from '../../helpers/fixtures.js';
 
 describe('msToHuman', () => {
   it('converts hours and minutes (short)', () => {
@@ -131,5 +133,40 @@ describe('formatFloat', () => {
 
   it('returns dash for undefined', () => {
     expect(formatFloat(undefined)).toBe('—');
+  });
+});
+
+describe('totalSleepTimeMs', () => {
+  it('sums light + SWS + REM (excludes awake)', () => {
+    const stages = makeSleepStageSummary({
+      total_light_sleep_time_milli: 11_520_000,
+      total_slow_wave_sleep_time_milli: 6_480_000,
+      total_rem_sleep_time_milli: 7_500_000,
+      total_awake_time_milli: 2_220_000,
+    });
+    expect(totalSleepTimeMs(stages)).toBe(25_500_000);
+  });
+
+  it('handles zeroes', () => {
+    const stages = makeSleepStageSummary({
+      total_light_sleep_time_milli: 0,
+      total_slow_wave_sleep_time_milli: 0,
+      total_rem_sleep_time_milli: 0,
+    });
+    expect(totalSleepTimeMs(stages)).toBe(0);
+  });
+});
+
+describe('metersToFeet', () => {
+  it('converts meters to feet (rounded)', () => {
+    expect(metersToFeet(100)).toBe(328);
+  });
+
+  it('handles zero', () => {
+    expect(metersToFeet(0)).toBe(0);
+  });
+
+  it('converts small elevation gains', () => {
+    expect(metersToFeet(30.5)).toBe(100);
   });
 });

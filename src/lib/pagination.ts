@@ -33,10 +33,7 @@ export async function paginate<T>(
   const maxRecords = options.limit ?? (options.all ? Infinity : undefined);
   const delay = options.interPageDelayMs ?? 75;
 
-  // Determine per-page limit
-  const pageSize = maxRecords !== undefined
-    ? Math.min(maxRecords - allRecords.length, 25)
-    : (baseParams.limit ?? 10);
+  const pageSize = baseParams.limit ?? 10;
 
   do {
     const params: ListParams = {

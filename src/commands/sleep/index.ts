@@ -1,6 +1,6 @@
 import {BaseListCommand} from '../../lib/base-list-command.js';
 import {colorSleepPerformance} from '../../lib/formatter.js';
-import {msToHuman, formatPercent} from '../../lib/units.js';
+import {msToHuman, formatPercent, totalSleepTimeMs} from '../../lib/units.js';
 import type {Column} from '../../lib/formatter.js';
 import type {PaginatedResponse, ListParams, Sleep} from '../../lib/types.js';
 
@@ -49,7 +49,7 @@ export default class SleepList extends BaseListCommand {
 
     const sc = s.score!;
     const stages = sc.stage_summary;
-    const totalSleep = stages.total_light_sleep_time_milli + stages.total_slow_wave_sleep_time_milli + stages.total_rem_sleep_time_milli;
+    const totalSleep = totalSleepTimeMs(stages);
 
     return {
       date: s.start.split('T')[0],

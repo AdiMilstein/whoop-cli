@@ -1,7 +1,7 @@
 import {Args} from '@oclif/core';
 import {BaseCommand} from '../../lib/base-command.js';
 import {colorStrain, renderBar} from '../../lib/formatter.js';
-import {msToHuman, kjToKcal, formatNumber, metersToMiles, metersToKm} from '../../lib/units.js';
+import {msToHuman, kjToKcal, formatNumber, metersToMiles, metersToKm, metersToFeet} from '../../lib/units.js';
 import type {Workout} from '../../lib/types.js';
 import type {Column} from '../../lib/formatter.js';
 
@@ -93,7 +93,7 @@ export default class WorkoutGet extends BaseCommand {
     let elevationGain = '—';
     if (s.altitude_gain_meter !== undefined) {
       elevationGain = units === 'imperial'
-        ? `${Math.round(s.altitude_gain_meter * 3.28084)} ft`
+        ? `${metersToFeet(s.altitude_gain_meter)} ft`
         : `${Math.round(s.altitude_gain_meter)} m`;
     }
 
@@ -140,7 +140,7 @@ export default class WorkoutGet extends BaseCommand {
 
     if (s.altitude_gain_meter !== undefined) {
       const altGain = units === 'imperial'
-        ? `${Math.round(s.altitude_gain_meter * 3.28084)}ft`
+        ? `${metersToFeet(s.altitude_gain_meter)}ft`
         : `${Math.round(s.altitude_gain_meter)}m`;
       this.log(`   Elevation gain: ${altGain}`);
     }

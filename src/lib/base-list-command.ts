@@ -49,6 +49,15 @@ export abstract class BaseListCommand extends BaseCommand {
    */
   protected abstract getQuietKey(): string;
 
+  /**
+   * Optional post-fetch filter hook. Override to filter records client-side
+   * (e.g. by sport name). Returns all records by default.
+   */
+  protected applyFilter(records: unknown[], flags: Record<string, unknown>): unknown[] {
+    void flags;
+    return records;
+  }
+
   async run(): Promise<void> {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const {flags} = await this.parse(this.constructor as any) as {flags: Record<string, any>};
@@ -60,6 +69,11 @@ export abstract class BaseListCommand extends BaseCommand {
     const baseParams: ListParams = {};
     if (flags.start) baseParams.start = parseDate(flags.start as string);
     if (flags.end) baseParams.end = parseDate(flags.end as string);
+
+    if (baseParams.start && baseParams.end && baseParams.start >= baseParams.end) {
+      this.error('Start date must be before end date.');
+    }
+
     if (!flags.all && !flags.limit && !flags.pages) {
       baseParams.limit = this.cliConfig.default_limit ?? 10;
     }
@@ -84,12 +98,14 @@ export abstract class BaseListCommand extends BaseCommand {
       process.stderr.write('\r' + ' '.repeat(60) + '\r');
     }
 
+    const filtered = this.applyFilter(records, flags as Record<string, unknown>);
+
     if (format === 'json') {
-      this.log(JSON.stringify(records, null, 2));
+      this.log(JSON.stringify(filtered, null, 2));
       return;
     }
 
-    const rows = records.map((r) => this.mapToRow(r, units, noColor));
+    const rows = filtered.map((r) => this.mapToRow(r, units, noColor));
     const options: FormatOptions = {
       format,
       noColor,

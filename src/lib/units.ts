@@ -1,3 +1,19 @@
+import type {SleepStageSummary} from './types.js';
+
+/**
+ * Sum light + SWS + REM sleep from a stage summary (excludes awake time).
+ */
+export function totalSleepTimeMs(stages: SleepStageSummary): number {
+  return stages.total_light_sleep_time_milli + stages.total_slow_wave_sleep_time_milli + stages.total_rem_sleep_time_milli;
+}
+
+/**
+ * Convert meters to feet (rounded).
+ */
+export function metersToFeet(m: number): number {
+  return Math.round(m * 3.28084);
+}
+
 /**
  * Convert milliseconds to human-readable duration.
  * @param ms - Duration in milliseconds

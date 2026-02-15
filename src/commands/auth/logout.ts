@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import {BaseCommand} from '../../lib/base-command.js';
 import {loadAuth, clearAuth} from '../../lib/auth.js';
+import {WhoopApiError} from '../../lib/api.js';
 
 export default class AuthLogout extends BaseCommand {
   static override description = 'Revoke WHOOP access and clear local tokens';
@@ -29,8 +30,12 @@ export default class AuthLogout extends BaseCommand {
     try {
       await this.api.revokeAccess();
       this.log('Revoked WHOOP access token on server.');
-    } catch {
-      this.log('Could not revoke token on server (may already be expired).');
+    } catch (error) {
+      if (error instanceof WhoopApiError && error.statusCode === 0) {
+        this.log('Could not reach WHOOP API to revoke token. Local credentials will still be cleared.');
+      } else {
+        this.log('Could not revoke token on server (may already be expired).');
+      }
     }
 
     // Clear local tokens

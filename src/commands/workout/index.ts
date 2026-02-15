@@ -78,52 +78,11 @@ export default class WorkoutList extends BaseListCommand {
     return 'strain';
   }
 
-  // Override run to add sport filtering
-  async run(): Promise<void> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const {flags} = await this.parse(this.constructor as any) as {flags: Record<string, any>};
+  protected override applyFilter(records: unknown[], flags: Record<string, unknown>): unknown[] {
     const sport = flags.sport as string | undefined;
-
-    // If no sport filter, delegate to parent
-    if (!sport) {
-      return super.run();
-    }
-
-    // Fetch then filter client-side
-    const {paginate, parseDate} = await import('../../lib/pagination.js');
-
-    const baseParams: ListParams = {};
-    if (flags.start) baseParams.start = parseDate(flags.start);
-    if (flags.end) baseParams.end = parseDate(flags.end);
-    if (!flags.all && !flags.limit && !flags.pages) {
-      baseParams.limit = this.cliConfig.default_limit ?? 10;
-    }
-
-    const records = await paginate(
-      (params) => this.fetchPage(params),
-      baseParams,
-      {limit: flags.limit, all: flags.all, pages: flags.pages},
-    );
-
-    const filtered = (records as Workout[]).filter((w) =>
+    if (!sport) return records;
+    return (records as Workout[]).filter((w) =>
       w.sport_name.toLowerCase().includes(sport.toLowerCase()),
     );
-
-    const format = this.getOutputFormat(flags);
-    const units = this.getUnits(flags);
-    const noColor = this.isNoColor(flags);
-
-    if (format === 'json') {
-      this.log(JSON.stringify(filtered, null, 2));
-      return;
-    }
-
-    const rows = filtered.map((r) => this.mapToRow(r, units, noColor));
-    this.printFormatted(rows, this.getColumns(), {
-      format,
-      noColor,
-      quiet: flags.quiet,
-      quietKey: this.getQuietKey(),
-    });
   }
 }

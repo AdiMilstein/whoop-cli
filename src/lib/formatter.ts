@@ -25,8 +25,10 @@ export function formatOutput(
   columns: Column[],
   options: FormatOptions,
 ): string {
-  if (options.quiet && options.quietKey) {
-    return data.map((row) => String(row[options.quietKey!] ?? '')).join('\n');
+  if (options.quiet) {
+    const key = options.quietKey;
+    if (!key) return data.map((row) => JSON.stringify(row)).join('\n');
+    return data.map((row) => String(row[key] ?? '')).join('\n');
   }
 
   switch (options.format) {
