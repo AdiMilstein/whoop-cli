@@ -50,7 +50,8 @@ export class WhoopApi {
         if (error.response?.status === 401 && config && !config._retried) {
           config._retried = true;
           try {
-            const token = await getValidToken();
+            const token = await getValidToken(true);
+            config.headers = config.headers ?? {};
             config.headers.Authorization = `Bearer ${token}`;
             return this.client.request(config);
           } catch {

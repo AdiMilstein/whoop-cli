@@ -43,6 +43,15 @@ export default class WorkoutLatest extends BaseCommand {
     }
 
     const getCmd = new WorkoutGet(this.argv, this.config);
+    if (format === 'csv') {
+      this.printFormatted(
+        [getCmd.toWorkoutRow(workout, units)],
+        getCmd.getWorkoutColumns(),
+        {format, noColor},
+      );
+      return;
+    }
+
     getCmd.printWorkoutDetail(workout, noColor, units);
   }
 }

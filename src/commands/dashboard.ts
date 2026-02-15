@@ -46,6 +46,49 @@ export default class Dashboard extends BaseCommand {
       return;
     }
 
+    if (format === 'csv') {
+      const row = {
+        cycleId: cycle.id,
+        cycleState: cycle.score_state,
+        strain: cycle.score_state === 'SCORED' && cycle.score ? cycle.score.strain.toFixed(1) : '—',
+        recovery: recovery && recovery.score_state === 'SCORED' && recovery.score
+          ? `${Math.round(recovery.score.recovery_score)}%`
+          : '—',
+        recoveryState: recovery?.score_state ?? 'NO_DATA',
+        sleepId: sleep?.id ?? '—',
+        sleepState: sleep?.score_state ?? 'NO_DATA',
+        sleepPerformance: sleep && sleep.score_state === 'SCORED' && sleep.score?.sleep_performance_percentage !== undefined
+          ? `${sleep.score.sleep_performance_percentage.toFixed(1)}%`
+          : '—',
+        workoutId: workout?.id ?? '—',
+        workoutSport: workout?.sport_name ?? '—',
+        workoutState: workout?.score_state ?? 'NO_DATA',
+        workoutStrain: workout && workout.score_state === 'SCORED' && workout.score
+          ? workout.score.strain.toFixed(1)
+          : '—',
+      };
+
+      this.printFormatted(
+        [row],
+        [
+          {key: 'cycleId', header: 'Cycle ID'},
+          {key: 'cycleState', header: 'Cycle State'},
+          {key: 'strain', header: 'Strain'},
+          {key: 'recovery', header: 'Recovery'},
+          {key: 'recoveryState', header: 'Recovery State'},
+          {key: 'sleepId', header: 'Sleep ID'},
+          {key: 'sleepState', header: 'Sleep State'},
+          {key: 'sleepPerformance', header: 'Sleep Performance'},
+          {key: 'workoutId', header: 'Workout ID'},
+          {key: 'workoutSport', header: 'Workout Sport'},
+          {key: 'workoutState', header: 'Workout State'},
+          {key: 'workoutStrain', header: 'Workout Strain'},
+        ],
+        {format, noColor},
+      );
+      return;
+    }
+
     // --- Recovery ---
     this.printRecoverySection(recovery, noColor);
     this.log('');

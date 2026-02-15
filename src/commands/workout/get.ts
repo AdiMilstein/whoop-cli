@@ -3,6 +3,7 @@ import {BaseCommand} from '../../lib/base-command.js';
 import {colorStrain, renderBar} from '../../lib/formatter.js';
 import {msToHuman, kjToKcal, formatNumber, metersToMiles, metersToKm} from '../../lib/units.js';
 import type {Workout} from '../../lib/types.js';
+import type {Column} from '../../lib/formatter.js';
 
 export default class WorkoutGet extends BaseCommand {
   static override description = 'Get a specific workout';
@@ -32,7 +33,83 @@ export default class WorkoutGet extends BaseCommand {
       return;
     }
 
+    if (format === 'csv') {
+      this.printFormatted(
+        [this.toWorkoutRow(workout, units)],
+        this.getWorkoutColumns(),
+        {format, noColor},
+      );
+      return;
+    }
+
     this.printWorkoutDetail(workout, noColor, units);
+  }
+
+  getWorkoutColumns(): Column[] {
+    return [
+      {key: 'date', header: 'Date'},
+      {key: 'workoutId', header: 'Workout ID'},
+      {key: 'sport', header: 'Sport'},
+      {key: 'strain', header: 'Strain'},
+      {key: 'duration', header: 'Duration'},
+      {key: 'avgHr', header: 'Avg HR'},
+      {key: 'maxHr', header: 'Max HR'},
+      {key: 'calories', header: 'Calories'},
+      {key: 'distance', header: 'Distance'},
+      {key: 'elevationGain', header: 'Elevation Gain'},
+      {key: 'state', header: 'State'},
+    ];
+  }
+
+  toWorkoutRow(workout: Workout, units: 'metric' | 'imperial'): Record<string, unknown> {
+    if (workout.score_state !== 'SCORED' || !workout.score) {
+      return {
+        date: workout.start.split('T')[0],
+        workoutId: workout.id,
+        sport: workout.sport_name,
+        strain: '—',
+        duration: '—',
+        avgHr: '—',
+        maxHr: '—',
+        calories: '—',
+        distance: '—',
+        elevationGain: '—',
+        state: workout.score_state,
+      };
+    }
+
+    const s = workout.score;
+    const start = new Date(workout.start).getTime();
+    const end = new Date(workout.end).getTime();
+    const durationMs = end - start;
+
+    let distance = '—';
+    if (s.distance_meter !== undefined) {
+      distance = units === 'imperial'
+        ? `${metersToMiles(s.distance_meter)} mi`
+        : `${metersToKm(s.distance_meter)} km`;
+    }
+
+    let elevationGain = '—';
+    if (s.altitude_gain_meter !== undefined) {
+      elevationGain = units === 'imperial'
+        ? `${Math.round(s.altitude_gain_meter * 3.28084)} ft`
+        : `${Math.round(s.altitude_gain_meter)} m`;
+    }
+
+    return {
+      date: workout.start.split('T')[0],
+      workoutId: workout.id,
+      sport: workout.sport_name,
+      strain: s.strain.toFixed(1),
+      duration: msToHuman(durationMs),
+      avgHr: s.average_heart_rate,
+      maxHr: s.max_heart_rate,
+      calories: formatNumber(kjToKcal(s.kilojoule)),
+      distance,
+      elevationGain,
+      state: workout.score_state,
+    };
   }
 
   printWorkoutDetail(workout: Workout, noColor: boolean, units: 'metric' | 'imperial'): void {

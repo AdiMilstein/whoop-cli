@@ -4,6 +4,7 @@ import {BaseCommand} from '../../lib/base-command.js';
 import {colorRecovery, recoveryEmoji} from '../../lib/formatter.js';
 import {formatFloat} from '../../lib/units.js';
 import type {Recovery} from '../../lib/types.js';
+import type {Column} from '../../lib/formatter.js';
 
 export default class RecoveryGet extends BaseCommand {
   static override description = 'Get recovery for a specific cycle';
@@ -32,7 +33,56 @@ export default class RecoveryGet extends BaseCommand {
       return;
     }
 
+    if (format === 'csv') {
+      this.printFormatted(
+        [this.toRecoveryRow(recovery)],
+        this.getRecoveryColumns(),
+        {format, noColor},
+      );
+      return;
+    }
+
     this.printRecoveryDetail(recovery, noColor);
+  }
+
+  getRecoveryColumns(): Column[] {
+    return [
+      {key: 'date', header: 'Date'},
+      {key: 'cycleId', header: 'Cycle ID'},
+      {key: 'recovery', header: 'Recovery'},
+      {key: 'hrv', header: 'HRV (ms)'},
+      {key: 'rhr', header: 'RHR (bpm)'},
+      {key: 'spo2', header: 'SpO2 (%)'},
+      {key: 'skinTemp', header: 'Skin Temp (°C)'},
+      {key: 'state', header: 'State'},
+    ];
+  }
+
+  toRecoveryRow(recovery: Recovery): Record<string, unknown> {
+    if (recovery.score_state !== 'SCORED' || !recovery.score) {
+      return {
+        date: recovery.created_at.split('T')[0],
+        cycleId: recovery.cycle_id,
+        recovery: '—',
+        hrv: '—',
+        rhr: '—',
+        spo2: '—',
+        skinTemp: '—',
+        state: recovery.score_state,
+      };
+    }
+
+    const s = recovery.score;
+    return {
+      date: recovery.created_at.split('T')[0],
+      cycleId: recovery.cycle_id,
+      recovery: `${Math.round(s.recovery_score)}%`,
+      hrv: formatFloat(s.hrv_rmssd_milli),
+      rhr: formatFloat(s.resting_heart_rate),
+      spo2: formatFloat(s.spo2_percentage),
+      skinTemp: formatFloat(s.skin_temp_celsius),
+      state: recovery.score_state,
+    };
   }
 
   printRecoveryDetail(recovery: Recovery, noColor: boolean): void {

@@ -42,6 +42,15 @@ export default class SleepLatest extends BaseCommand {
     }
 
     const getCmd = new SleepGet(this.argv, this.config);
+    if (format === 'csv') {
+      this.printFormatted(
+        [getCmd.toSleepRow(sleep)],
+        getCmd.getSleepColumns(),
+        {format, noColor},
+      );
+      return;
+    }
+
     getCmd.printSleepDetail(sleep, noColor);
   }
 }

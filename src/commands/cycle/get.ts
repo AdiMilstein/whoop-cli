@@ -30,6 +30,49 @@ export default class CycleGet extends BaseCommand {
       return;
     }
 
+    if (format === 'csv') {
+      let row: Record<string, unknown>;
+      if (cycle.score_state === 'SCORED' && cycle.score) {
+        row = {
+          id: cycle.id,
+          start: cycle.start,
+          end: cycle.end ?? '(active)',
+          strain: cycle.score.strain.toFixed(1),
+          calories: formatNumber(kjToKcal(cycle.score.kilojoule)),
+          avgHr: cycle.score.average_heart_rate,
+          maxHr: cycle.score.max_heart_rate,
+          state: cycle.score_state,
+        };
+      } else {
+        row = {
+          id: cycle.id,
+          start: cycle.start,
+          end: cycle.end ?? '(active)',
+          strain: '—',
+          calories: '—',
+          avgHr: '—',
+          maxHr: '—',
+          state: cycle.score_state,
+        };
+      }
+
+      this.printFormatted(
+        [row],
+        [
+          {key: 'id', header: 'ID'},
+          {key: 'start', header: 'Start'},
+          {key: 'end', header: 'End'},
+          {key: 'strain', header: 'Strain'},
+          {key: 'calories', header: 'Calories'},
+          {key: 'avgHr', header: 'Avg HR'},
+          {key: 'maxHr', header: 'Max HR'},
+          {key: 'state', header: 'State'},
+        ],
+        {format, noColor},
+      );
+      return;
+    }
+
     if (cycle.score_state !== 'SCORED' || !cycle.score) {
       this.log(`Cycle ${cycle.id}: (${cycle.score_state === 'PENDING_SCORE' ? 'Pending' : 'Unscorable'})`);
       this.log(`  Start: ${cycle.start}`);

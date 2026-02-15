@@ -1,9 +1,10 @@
-import {describe, it, expect, beforeEach, afterEach} from 'vitest';
+import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest';
 import {existsSync, mkdirSync, rmSync, statSync} from 'node:fs';
 import {join} from 'node:path';
 import {tmpdir} from 'node:os';
+import axios from 'axios';
 import {
-  loadAuth, saveAuth, clearAuth, isTokenExpired,
+  loadAuth, saveAuth, clearAuth, isTokenExpired, getValidToken,
   resetAuthCache,
 } from '../../../src/lib/auth.js';
 import {resetConfigCache} from '../../../src/lib/config.js';
@@ -43,6 +44,7 @@ describe('auth', () => {
     delete process.env.WHOOP_ACCESS_TOKEN;
     resetAuthCache();
     resetConfigCache();
+    vi.restoreAllMocks();
   });
 
   describe('loadAuth', () => {
@@ -118,6 +120,42 @@ describe('auth', () => {
     it('returns false when just outside 5 minute buffer', () => {
       const auth = makeAuthData({expires_at: Date.now() + 6 * 60 * 1000}); // 6 minutes from now
       expect(isTokenExpired(auth)).toBe(false);
+    });
+  });
+
+  describe('getValidToken', () => {
+    it('returns cached token when not expired', async () => {
+      saveAuth(makeAuthData({access_token: 'cached-token', expires_at: Date.now() + 60 * 60 * 1000}));
+      const postSpy = vi.spyOn(axios, 'post');
+
+      const token = await getValidToken();
+
+      expect(token).toBe('cached-token');
+      expect(postSpy).not.toHaveBeenCalled();
+    });
+
+    it('refreshes immediately when forceRefresh is true', async () => {
+      saveAuth(makeAuthData({access_token: 'old-token', expires_at: Date.now() + 60 * 60 * 1000}));
+      const postSpy = vi.spyOn(axios, 'post').mockResolvedValue({
+        data: {
+          access_token: 'new-token',
+          refresh_token: 'new-refresh-token',
+          expires_in: 3600,
+          scope: 'offline read:profile',
+        },
+      } as any);
+
+      const token = await getValidToken(true);
+
+      expect(token).toBe('new-token');
+      expect(postSpy).toHaveBeenCalledTimes(1);
+      expect(loadAuth()?.access_token).toBe('new-token');
+    });
+
+    it('throws when forceRefresh is true and no refresh token exists', async () => {
+      saveAuth(makeAuthData({refresh_token: undefined}));
+
+      await expect(getValidToken(true)).rejects.toThrow('Session expired');
     });
   });
 });

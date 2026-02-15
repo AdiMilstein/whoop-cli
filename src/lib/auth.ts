@@ -110,7 +110,7 @@ export async function refreshToken(auth: AuthData): Promise<AuthData> {
 /**
  * Get a valid access token, auto-refreshing if needed.
  */
-export async function getValidToken(): Promise<string> {
+export async function getValidToken(forceRefresh = false): Promise<string> {
   const auth = loadAuth();
 
   if (!auth) {
@@ -120,6 +120,15 @@ export async function getValidToken(): Promise<string> {
   // Env var tokens bypass refresh
   if (process.env.WHOOP_ACCESS_TOKEN) {
     return auth.access_token;
+  }
+
+  if (forceRefresh) {
+    try {
+      const newAuth = await refreshToken(auth);
+      return newAuth.access_token;
+    } catch {
+      throw new Error('Session expired. Run "whoop auth login" to re-authenticate.');
+    }
   }
 
   if (isTokenExpired(auth)) {

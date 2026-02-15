@@ -3,6 +3,7 @@ import {BaseCommand} from '../../lib/base-command.js';
 import {colorSleepPerformance} from '../../lib/formatter.js';
 import {msToHuman, formatPercent, formatFloat} from '../../lib/units.js';
 import type {Sleep} from '../../lib/types.js';
+import type {Column} from '../../lib/formatter.js';
 
 export default class SleepGet extends BaseCommand {
   static override description = 'Get a specific sleep session';
@@ -31,7 +32,83 @@ export default class SleepGet extends BaseCommand {
       return;
     }
 
+    if (format === 'csv') {
+      this.printFormatted(
+        [this.toSleepRow(sleep)],
+        this.getSleepColumns(),
+        {format, noColor},
+      );
+      return;
+    }
+
     this.printSleepDetail(sleep, noColor);
+  }
+
+  getSleepColumns(): Column[] {
+    return [
+      {key: 'date', header: 'Date'},
+      {key: 'sleepId', header: 'Sleep ID'},
+      {key: 'cycleId', header: 'Cycle ID'},
+      {key: 'duration', header: 'Duration'},
+      {key: 'performance', header: 'Performance'},
+      {key: 'efficiency', header: 'Efficiency'},
+      {key: 'consistency', header: 'Consistency'},
+      {key: 'respRate', header: 'Resp Rate'},
+      {key: 'light', header: 'Light'},
+      {key: 'sws', header: 'SWS'},
+      {key: 'rem', header: 'REM'},
+      {key: 'awake', header: 'Awake'},
+      {key: 'disturbances', header: 'Disturbances'},
+      {key: 'sleepCycles', header: 'Sleep Cycles'},
+      {key: 'nap', header: 'Nap'},
+      {key: 'state', header: 'State'},
+    ];
+  }
+
+  toSleepRow(sleep: Sleep): Record<string, unknown> {
+    if (sleep.score_state !== 'SCORED' || !sleep.score) {
+      return {
+        date: sleep.start.split('T')[0],
+        sleepId: sleep.id,
+        cycleId: sleep.cycle_id,
+        duration: '—',
+        performance: '—',
+        efficiency: '—',
+        consistency: '—',
+        respRate: '—',
+        light: '—',
+        sws: '—',
+        rem: '—',
+        awake: '—',
+        disturbances: '—',
+        sleepCycles: '—',
+        nap: sleep.nap ? 'Yes' : 'No',
+        state: sleep.score_state,
+      };
+    }
+
+    const sc = sleep.score;
+    const stages = sc.stage_summary;
+    const totalSleep = stages.total_light_sleep_time_milli + stages.total_slow_wave_sleep_time_milli + stages.total_rem_sleep_time_milli;
+
+    return {
+      date: sleep.start.split('T')[0],
+      sleepId: sleep.id,
+      cycleId: sleep.cycle_id,
+      duration: msToHuman(totalSleep),
+      performance: formatPercent(sc.sleep_performance_percentage),
+      efficiency: formatPercent(sc.sleep_efficiency_percentage),
+      consistency: formatPercent(sc.sleep_consistency_percentage),
+      respRate: formatFloat(sc.respiratory_rate),
+      light: msToHuman(stages.total_light_sleep_time_milli),
+      sws: msToHuman(stages.total_slow_wave_sleep_time_milli),
+      rem: msToHuman(stages.total_rem_sleep_time_milli),
+      awake: msToHuman(stages.total_awake_time_milli),
+      disturbances: stages.disturbance_count,
+      sleepCycles: stages.sleep_cycle_count,
+      nap: sleep.nap ? 'Yes' : 'No',
+      state: sleep.score_state,
+    };
   }
 
   printSleepDetail(sleep: Sleep, noColor: boolean): void {

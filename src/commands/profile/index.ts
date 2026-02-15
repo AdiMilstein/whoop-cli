@@ -15,11 +15,29 @@ export default class Profile extends BaseCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(Profile);
     const format = this.getOutputFormat(flags);
+    const noColor = this.isNoColor(flags);
 
     const profile = await this.api.getProfile();
 
     if (format === 'json') {
       this.log(JSON.stringify(profile, null, 2));
+      return;
+    }
+
+    if (format === 'csv') {
+      this.printFormatted(
+        [{
+          name: `${profile.first_name} ${profile.last_name}`,
+          email: profile.email,
+          userId: profile.user_id,
+        }],
+        [
+          {key: 'name', header: 'Name'},
+          {key: 'email', header: 'Email'},
+          {key: 'userId', header: 'User ID'},
+        ],
+        {format, noColor},
+      );
       return;
     }
 

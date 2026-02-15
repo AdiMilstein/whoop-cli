@@ -16,6 +16,7 @@ export default class ProfileBody extends BaseCommand {
   async run(): Promise<void> {
     const {flags} = await this.parse(ProfileBody);
     const format = this.getOutputFormat(flags);
+    const noColor = this.isNoColor(flags);
 
     const body = await this.api.getBodyMeasurement();
 
@@ -26,6 +27,27 @@ export default class ProfileBody extends BaseCommand {
 
     const heightImperial = metersToFeetInches(body.height_meter);
     const weightImperial = kgToLbs(body.weight_kilogram);
+
+    if (format === 'csv') {
+      this.printFormatted(
+        [{
+          heightMeters: body.height_meter.toFixed(2),
+          heightImperial,
+          weightKg: body.weight_kilogram.toFixed(1),
+          weightLb: weightImperial.toFixed(1),
+          maxHeartRate: body.max_heart_rate,
+        }],
+        [
+          {key: 'heightMeters', header: 'Height (m)'},
+          {key: 'heightImperial', header: 'Height (imperial)'},
+          {key: 'weightKg', header: 'Weight (kg)'},
+          {key: 'weightLb', header: 'Weight (lb)'},
+          {key: 'maxHeartRate', header: 'Max Heart Rate'},
+        ],
+        {format, noColor},
+      );
+      return;
+    }
 
     this.log(`Height:         ${body.height_meter.toFixed(2)}m (${heightImperial})`);
     this.log(`Weight:         ${body.weight_kilogram.toFixed(1)}kg (${weightImperial}lb)`);

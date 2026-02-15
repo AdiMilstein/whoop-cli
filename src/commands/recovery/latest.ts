@@ -41,8 +41,16 @@ export default class RecoveryLatest extends BaseCommand {
       return;
     }
 
-    // Delegate to RecoveryGet's display logic
     const getCmd = new RecoveryGet(this.argv, this.config);
+    if (format === 'csv') {
+      this.printFormatted(
+        [getCmd.toRecoveryRow(recovery)],
+        getCmd.getRecoveryColumns(),
+        {format, noColor},
+      );
+      return;
+    }
+
     getCmd.printRecoveryDetail(recovery, noColor);
   }
 }
