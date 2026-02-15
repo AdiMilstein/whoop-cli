@@ -1,0 +1,85 @@
+{
+  "name": "whoop-cli",
+  "version": "0.1.0",
+  "description": "CLI tool for the WHOOP Developer API v2",
+  "type": "module",
+  "bin": {
+    "whoop": "./bin/run.js"
+  },
+  "exports": "./dist/index.js",
+  "main": "",
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "scripts": {
+    "build": "tsc -b",
+    "dev": "node --loader ts-node/esm ./bin/dev.js",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postpack": "rm -f oclif.manifest.json",
+    "prepack": "oclif manifest"
+  },
+  "oclif": {
+    "bin": "whoop",
+    "dirname": "whoop-cli",
+    "commands": {
+      "strategy": "pattern",
+      "target": "./dist/commands"
+    },
+    "topicSeparator": " ",
+    "topics": {
+      "auth": {
+        "description": "Manage WHOOP authentication"
+      },
+      "config": {
+        "description": "Manage CLI configuration"
+      },
+      "profile": {
+        "description": "View WHOOP profile information"
+      },
+      "recovery": {
+        "description": "View recovery data"
+      },
+      "sleep": {
+        "description": "View sleep data"
+      },
+      "workout": {
+        "description": "View workout data"
+      },
+      "cycle": {
+        "description": "View physiological cycle data"
+      }
+    }
+  },
+  "dependencies": {
+    "@oclif/core": "^4",
+    "axios": "^1",
+    "chalk": "^5",
+    "cli-table3": "^0.6",
+    "open": "^10"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "msw": "^2",
+    "oclif": "^4",
+    "ts-node": "^10",
+    "typescript": "^5",
+    "vitest": "^3"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "keywords": [
+    "whoop",
+    "cli",
+    "health",
+    "fitness",
+    "recovery",
+    "sleep",
+    "workout"
+  ],
+  "license": "MIT"
+}
